@@ -1,0 +1,126 @@
+generator client {
+    
+  provider = "prisma-client-js"
+}
+
+datasource db {
+
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+
+    id String @id @default(uuid())
+    name String?
+    email String? @unique
+    emailVerified DateTime?
+    image String?
+    hashedPassword String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt 
+    categories Category[]
+    allocations Allocation[]
+    ledgerEntries LedgerEntry[]
+    tasks Task[]
+    accounts Account[]
+    allocationsGroups AllocationsGroup[]
+}
+
+model Account {
+
+    id String @id @default(uuid())
+    userId String
+    type String
+    provider String
+    providerAccountId String
+    refreshToken String? 
+    accessToken String?
+    expiresAt Int?
+    tokenType String? 
+    scope String?
+    idToken String? 
+    session_state String?
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@unique([provider, providerAccountId])
+}
+
+model Category {
+
+    id Int @id @default(autoincrement())
+    userId String
+    name String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    type CategoryType
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    ledgerEntries LedgerEntry[]
+    @@unique([name, type])
+}
+
+enum CategoryType {
+
+    Income
+    Cost
+}
+
+model Allocation {
+
+    id Int @id @default(autoincrement())
+    userId String
+    allocationsGroupId Int?
+    name String @unique
+    percent Float @default(0)
+    money Float @default(0) 
+    remindToPutTo Boolean @default(false)
+    moneyToPut Float @default(0)
+    currency Currency
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    allocationsGroup AllocationsGroup? @relation(fields: [allocationsGroupId], references: [id])
+    ledgerEntries LedgerEntry[]
+}
+
+enum Currency {
+
+    Rouble
+    Dollar
+    Euro
+}
+
+model AllocationsGroup {
+
+    id Int @id @default(autoincrement())
+    userId String
+    name String 
+    allocations Allocation[]
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    @@unique([userId, name])
+}
+
+model LedgerEntry {
+
+    id Int @id @default(autoincrement())
+    userId String
+    date DateTime @default(now())
+    allocationId Int?
+    categoryId Int
+    amount Float
+    record String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    allocation Allocation? @relation(fields: [allocationId], references: [id], onDelete: Cascade)
+    category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+
+    id Int @id @default(autoincrement())
+    userId String
+    record String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
