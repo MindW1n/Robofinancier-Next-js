@@ -52,16 +52,9 @@ model Category {
     name String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-    type CategoryType
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     ledgerEntries LedgerEntry[]
-    @@unique([name, type])
-}
-
-enum CategoryType {
-
-    Income
-    Cost
+    @@unique([name, userId])
 }
 
 model Allocation {
@@ -69,7 +62,7 @@ model Allocation {
     id Int @id @default(autoincrement())
     userId String
     allocationsGroupId Int?
-    name String @unique
+    name String 
     percent Float @default(0)
     money Float @default(0) 
     remindToPutTo Boolean @default(false)
@@ -80,6 +73,7 @@ model Allocation {
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     allocationsGroup AllocationsGroup? @relation(fields: [allocationsGroupId], references: [id])
     ledgerEntries LedgerEntry[]
+    @@unique([userId, name])
 }
 
 enum Currency {

@@ -53,7 +53,7 @@ export default function LedgerEntry({ data, onDelete, session, index })
                         </div>
                         <div className="flex flex-row font-bold text-center">
                             <div className="border-4 border-slate-400 bg-slate-200 rounded-3xl p-1 mx-4 w-1/2 text-xl">
-                                { ledgerEntryData.allocation ? ledgerEntryData.allocation.name : "All" }
+                                { ledgerEntryData.allocationsGroup ? ledgerEntryData.allocationsGroup.name : ledgerEntryData.allocation ? ledgerEntryData.allocation.name : "All" }
                             </div>
                             <div className="border-4 border-slate-400 bg-slate-200 mx-4 w-1/2 text-xl rounded-3xl flex items-center justify-center">
                                 { ledgerEntryData.category.name }

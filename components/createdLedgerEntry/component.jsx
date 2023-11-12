@@ -9,19 +9,7 @@ export default function CreatedLedgerEntry({ session, index, onDelete })
 {
     const [ledgerEntry, setLedgerEntry] = useState()
 
-    const databaseFunction = async (data) => {
-
-        return (await axios.post("/api/createLedgerEntry", { 
-                
-            userId: data.userId, 
-            date: data.date, 
-            allocationId: data.allocationId, 
-            categoryId: data.categoryId, 
-            amount: data.amount, 
-            record: data.record 
-
-        })).data.ledgerEntry
-    }
+    const databaseFunction = async (data) => { return (await axios.post("/api/createLedgerEntry", data)).data.ledgerEntry }
 
     return (
 

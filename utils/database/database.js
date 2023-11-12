@@ -251,11 +251,6 @@ export async function getCategory(categoryId)
     })
 }
 
-export async function createLedgerEntry(userId, date, allocationId, categoryId, amount, record)
-{
-    return 
-}
-
 export async function editLedgerEntry(id, date, allocationId, amount, categoryId, record)
 {
     return prisma.ledgerEntry.update({
@@ -302,6 +297,7 @@ export async function getLedgerEntries(userId, orderBy)
         include: {
 
             allocation: true,
+            allocationsGroup: true,
             category: true
         }
     })
