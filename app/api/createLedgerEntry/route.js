@@ -3,9 +3,27 @@ import { getCategory, createLedgerEntry, getAllocations, editAllocation, getAllo
 
 export async function POST(request)
 {
-    const { userId, date, allocationId, categoryId, amount, record } = await request.json()
-    const ISOFormatDate = date + "T00:00:00.000Z"
-    const databaseRequests = [createLedgerEntry(userId, ISOFormatDate, allocationId, categoryId, amount, record), getCategory(categoryId)]
+    const { userId, date, allocationId, allocationsGroupId, categoryId, amount, record } = await request.json()
+    const databaseRequests = [createLedgerEntry(userId, date, allocationId, categoryId, amount, record), getCategory(categoryId)]
+
+    await prisma.ledgerEntry.create({
+
+        data: {
+
+            userId: userId,
+            date: date,
+            allocationId: allocationId,
+            categoryId: categoryId,
+            amount: amount,
+            record: record
+        },
+        include: {
+
+            allocation: true,
+            category: true
+        }
+    })
+    
     const [ledgerEntry, category] = await Promise.all(databaseRequests)
 
     if(category.type == "Income") {

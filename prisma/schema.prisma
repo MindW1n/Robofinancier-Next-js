@@ -96,6 +96,7 @@ model AllocationsGroup {
     name String 
     allocations Allocation[]
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    ledgerEntries LedgerEntry[]
     @@unique([userId, name])
 }
 
@@ -105,12 +106,14 @@ model LedgerEntry {
     userId String
     date DateTime @default(now())
     allocationId Int?
+    allocationsGroupId Int?
     categoryId Int
     amount Float
     record String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     allocation Allocation? @relation(fields: [allocationId], references: [id], onDelete: Cascade)
+    allocationsGroup AllocationsGroup? @relation(fields: [allocationsGroupId], references: [id], onDelete: Cascade)
     category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

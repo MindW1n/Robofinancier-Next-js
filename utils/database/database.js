@@ -109,6 +109,7 @@ export async function createAllocation(userId, name, percent, money, currency, r
             currency: currency,
             remindToPutTo: remindToPutTo
         }
+
     }).catch(() => { return null })
 }
 
@@ -252,23 +253,7 @@ export async function getCategory(categoryId)
 
 export async function createLedgerEntry(userId, date, allocationId, categoryId, amount, record)
 {
-    return await prisma.ledgerEntry.create({
-
-        data: {
-
-            userId: userId,
-            date: date,
-            allocationId: allocationId,
-            categoryId: categoryId,
-            amount: amount,
-            record: record
-        },
-        include: {
-
-            allocation: true,
-            category: true
-        }
-    })
+    return 
 }
 
 export async function editLedgerEntry(id, date, allocationId, amount, categoryId, record)
