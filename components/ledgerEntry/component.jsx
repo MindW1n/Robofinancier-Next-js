@@ -9,18 +9,9 @@ export default function LedgerEntry({ data, onDelete, session, index })
     const [ledgerEntryData, setLedgerEntryData] = useState(data)
     const [editFormFlag, setEditFormFlag] = useState(false)
 
-    const databaseFunction = async (formData) =>  {
+    const databaseFunction = async (formData) => {
         
-        return (await axios.post("/api/editLedgerEntry", { 
-            
-            id: data.id, 
-            date: formData.date, 
-            allocationId: formData.allocationId, 
-            amount: formData.amount, 
-            categoryId: formData.categoryId, 
-            record: formData.record 
-
-        })).data.ledgerEntry
+        return (await axios.post("/api/editLedgerEntry", { id: data.id, ...formData })).data.ledgerEntry
     }
 
     const handleDelete = () => {
@@ -64,7 +55,7 @@ export default function LedgerEntry({ data, onDelete, session, index })
                         </div>
                         <div className="mb-4">
                             <div className={ "h-10 font-bold text-2xl rounded-3xl mx-4 mb-4 flex justify-center items-center " 
-                                + (ledgerEntryData.category.type == "Income" ? "bg-green-400" : "bg-red-600 text-white")}>
+                                + (ledgerEntryData.amount > 0 ? "bg-green-400" : "bg-red-600 text-white")}>
                                 { ledgerEntryData.amount + " " + (!ledgerEntryData.allocation || ledgerEntryData.allocation.currency == "Rouble" ? "₽" : (ledgerEntryData.allocation.currency == "Dollar" ? "$" : "€"))  }
                             </div>  
                         </div>

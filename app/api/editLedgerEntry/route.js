@@ -1,87 +1,92 @@
 import { NextResponse } from "next/server"
-import { getUser, getCategory, editLedgerEntry, getLedgerEntry, getAllocations, editAllocation, getAllocation } from "../../../utils/database/database"
+import prisma from "@/libs/prisma"
 
 export async function POST(request)
 {
-    const { id, date, allocationId, amount, categoryId, record } = await request.json()
-    const ISOFormatDate = date + "T00:00:00.000Z"
-    const ledgerEntry = await getLedgerEntry(id)
-    const databaseRequests = [await getCategory(ledgerEntry.categoryId), await getCategory(categoryId), await getUser(ledgerEntry.userId)]
-    const [prevCategory, currentCategory, user] = await Promise.all(databaseRequests)
-    const categoryTypeChanged = prevCategory.type != currentCategory.type
-    const wasIncomeCategory = prevCategory.type == "Income"
-    const difference = !categoryTypeChanged 
-        ? (amount - ledgerEntry.amount) 
-        : wasIncomeCategory ? -(amount + ledgerEntry.amount) : amount + ledgerEntry.amount
+    const { id, date, allocationId, allocationsGroupId, amount, categoryId, record } = await request.json()
+    const ledgerEntry = await prisma.ledgerEntry.findFirst({ where: { id } })
 
-    if(!categoryTypeChanged) {
-
-        if(wasIncomeCategory) {
-
-            const allocations = await getAllocations(user.id)
-
-            for(const allocation of allocations) {
-
-                if(!allocation.remindToPutTo) editAllocation({ id: allocation.id, money: allocation.money + difference * allocation.percent / 100 })
-                else editAllocation({ id: allocation.id, moneyToPut: allocation.moneyToPut + difference * allocation.percent / 100 })
-            }
-        }
-
-        else {
-
-            if(allocationId != ledgerEntry.allocationId) {
-
-                const prevAllocation = await getAllocation(ledgerEntry.allocationId)
-                editAllocation({ id: prevAllocation.id, money: prevAllocation.money + ledgerEntry.amount })
-                const currentAllocation = await getAllocation(allocationId)
-                editAllocation({ id: currentAllocation.id, money: currentAllocation.money - amount })
-            }
-
-            else {
-
-                const allocation = await getAllocation(allocationId)
-                editAllocation({ id: allocationId, money: allocation.money - difference })
-            }
-        }
-    }
-
-    else {
-
-        if(wasIncomeCategory) {
+    if(ledgerEntry.allocationsGroupId == null && ledgerEntry.allocationId == null) await prisma.allocation.findMany({ where: { userId: ledgerEntry.userId } })
+        .then((allocations) => Promise.all(allocations.map((allocation) => prisma.allocation.update({ 
             
-            const allocations = await getAllocations(user.id)
+            where: { id: allocation.id }, 
+            data: { money: allocation.money - ledgerEntry.amount * allocation.percent / 100 }
 
-            for(const allocation of allocations) {
+        }))).then())
 
-                if(allocation.id != allocationId) {
-                    
-                    if(!allocation.remindToPutTo) editAllocation({ id: allocation.id, money: allocation.money - ledgerEntry.amount * allocation.percent / 100 })
-                    else editAllocation({ id: allocation.id, moneyToPut: allocation.moneyToPut - ledgerEntry.amount * allocation.percent / 100 })
-                }
-            }
+    else if(ledgerEntry.allocationsGroupId != null) await prisma.allocation.findMany({ where: { allocationsGroupId: ledgerEntry.allocationsGroupId } })
+        .then((allocations) => {
+            
+            const commonPercent = allocations.reduce((total, allocation) => total + allocation.percent, 0)
 
-            const allocation = await getAllocation(allocationId)
-            if(!allocation.remindToPutTo) editAllocation({ id: allocation.id, money: allocation.money - amount - ledgerEntry.amount * allocation.percent / 100 })
-            else editAllocation({ id: allocation.id, moneyToPut: allocation.moneyToPut - ledgerEntry.amount * allocation.percent / 100, money: allocation.money - amount })
-        }
+            return Promise.all(allocations.map((allocation) => prisma.allocation.update({
 
-        else {
+                where: { id: allocation.id },
+                data: { money: allocation.money - ledgerEntry.amount * allocation.percent / commonPercent}
 
-            const prevAllocation = await getAllocation(ledgerEntry.allocationId)
-            if(!prevAllocation.remindToPutTo) editAllocation({ id: prevAllocation.id, money: prevAllocation.money + ledgerEntry.amount + amount * prevAllocation.percent / 100 }) 
-            else editAllocation({ id: prevAllocation.id, money: prevAllocation.money + ledgerEntry.amount, moneyToPut: prevAllocation.moneyToPut + amount * prevAllocation.percent / 100 })
-            const allocations = await getAllocations(user.id)
+            })))
 
-            for(const allocation of allocations) {
+        }).then()
 
-                if(allocation.id != prevAllocation.id) { 
-                    
-                    if(!allocation.remindToPutTo) editAllocation({ id: allocation.id, money: allocation.money + amount * allocation.percent / 100 })
-                    else editAllocation({ id: allocation.id, money: allocation.money, moneyToPut: allocation.moneyToPut + amount * allocation.percent / 100 })
-                }
-            }
-        }
-    }
+    else await prisma.allocation.findFirst({ where: { id: ledgerEntry.allocationId } })
+        .then((allocation) => prisma.allocation.update({ 
+            
+            where: { id: allocation.id }, 
+            data: { money: allocation.money - ledgerEntry.amount }
+        
+        }).then())
+
+    if(allocationsGroupId == null && allocationId == null) prisma.allocation.findMany({ where: { userId: ledgerEntry.userId } })
+        .then((allocations) => Promise.all(allocations.map((allocation) => {
+
+            if(!allocation.remindToPutTo || amount < 0) return prisma.allocation.update({
+
+                where: { id: allocation.id }, 
+                data: { money: allocation.money + amount * allocation.percent / 100 }
+            })
+
+            else return prisma.allocation.update({ 
+            
+                where: { id: allocation.id }, 
+                data: { moneyToPut: allocation.moneyToPut + amount * allocation.percent / 100 }
+            })
+
+        })).then())
+
+    else if(allocationsGroupId != null) prisma.allocation.findMany({ where: { allocationsGroupId } }).then((allocations) => {
+            
+        const commonPercent = allocations.reduce((total, allocation) => total + allocation.percent, 0)
+
+        Promise.all(allocations.map((allocation) => prisma.allocation.update({
+
+            where: { id: allocation.id },
+            data: { money: allocation.money + amount * allocation.percent / commonPercent}
+
+        }))).then()
+    })
+
+    else prisma.allocation.findFirst({ where: { id: allocationId } })
+        .then((allocation) => { 
+
+            if(!allocation.remindToPutTo || amount < 0) return prisma.allocation.update({
+
+                where: { id: allocation.id }, 
+                data: { money: allocation.money + amount }
+            })
+
+            else return prisma.allocation.update({ 
+            
+                where: { id: allocation.id }, 
+                data: { moneyToPut: allocation.moneyToPut + amount }
+            })
+
+        }).then()
+
+    return NextResponse.json({ ledgerEntry: await prisma.ledgerEntry.update({ 
+        
+        where: { id }, 
+        data: { id, date, allocationId, allocationsGroupId, amount, categoryId, record },
+        include: { category: true, allocation: true }
     
-    return NextResponse.json({ ledgerEntry: await editLedgerEntry(id, ISOFormatDate, allocationId, amount, categoryId, record) })
+    }) }, { status: 200 })
 }

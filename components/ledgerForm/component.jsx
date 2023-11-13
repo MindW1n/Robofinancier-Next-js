@@ -12,7 +12,7 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
     const [categoryType, setCategoryType] = useState("Income")
     const [record, setRecord] = useState(placeholder ? placeholder.record : "")
     const [selectedCategory, setSelectedCategory] = useState(placeholder ? String(placeholder.categoryId) : "new")
-    const [selectedAllocation, setSelectedAllocation] = useState(placeholder?.allocationId ? placeholder.allocationId : "all")
+    const [selectedAllocation, setSelectedAllocation] = useState(placeholder?.allocationId ? "allocation " + placeholder.allocationId : "all")
     const [incorrectInputValue, setIncorrectInputValue] = useState("")
 
     useEffect(() => {

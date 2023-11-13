@@ -31,12 +31,11 @@ export default function AllocationsGroup({ data, onDelete, index, ununiteAllocat
 
     const handlePutOnAccount = (amount) => setAllocations(prevAllocations => {
 
-            const totalPercentage = prevAllocations.reduce((sum, current) => sum + current.props.data.percent, 0)
-
             const newAllocations = prevAllocations.map(allocation => {
 
-                const newMoney = allocation.props.data.money + amount * (allocation.props.data.percent / totalPercentage)
-                const newMoneyToPut = allocation.props.data.moneyToPut - amount * (allocation.props.data.percent / totalPercentage)
+                const difference = amount * allocation.props.data.moneyToPut / moneyToPut
+                const newMoney = allocation.props.data.money + difference
+                const newMoneyToPut = allocation.props.data.moneyToPut - difference
                 axios.post("/api/editAllocation", { id: allocation.props.data.id, money: newMoney, moneyToPut: newMoneyToPut })
                 return <Allocation { ...allocation.props } data={{ ...allocation.props.data, money: newMoney, moneyToPut: newMoneyToPut }} 
                     key={ allocation.props.id }/>

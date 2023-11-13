@@ -37,30 +37,32 @@ export default function StatisticsBoard({ session })
 
             let incomesCategoriesMap = {}
             let costsCategoriesMap = {}
+            let loadedCategoriesMap = {}
+            loadedCategories.map((category) => { loadedCategoriesMap[category.id] = { name: category.name } })
+
             let total = 0
             let statistics = []
 
-            for(const category of loadedCategories) {
-                
-                if(category.type[0] == 'I') incomesCategoriesMap[category.id] = { name: category.name, total: 0 }
-                else costsCategoriesMap[category.id] = { name: category.name, total: 0 }
-            }
-
             for(let i = 0; i < loadedLedgerEntries.length; i++) {
 
-                if(incomesCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId)) {
+                if(loadedLedgerEntries[i].amount > 0) {
+                    
+                    if(!incomesCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId)) 
+                        incomesCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
 
                     incomesCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
-                    total += loadedLedgerEntries[i].amount
                 }
 
                 else {
                     
+                    if(!costsCategoriesMap.hasOwnProperty(loadedCategoriesMap[i].categoryId))
+                        costsCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
+
                     costsCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
-                        total -= loadedLedgerEntries[i].amount
                 }
 
-                statistics.push({ date: loadedLedgerEntries[i].date, money: total  })
+                total += loadedLedgerEntries[i].amount
+                statistics.push({ date: loadedLedgerEntries[i].date, money: total })
             } 
 
             setStatistics(statistics)

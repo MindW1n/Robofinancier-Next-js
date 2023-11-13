@@ -17,7 +17,7 @@ export async function POST(request)
 
         Promise.all(allocations.map((allocation) => {
 
-            if(!allocation.remindToPutTo) {
+            if(!allocation.remindToPutTo || amount < 0) {
 
                 return prisma.allocation.update({
 
@@ -40,12 +40,12 @@ export async function POST(request)
 
     else if(allocationId != null) {
 
-        if(!ledgerEntry.allocation.remindToPutTo) {
+        if(!ledgerEntry.allocation.remindToPutTo || amount < 0) {
 
             prisma.allocation.update({
 
                 where: { id: allocationId },
-                data: { money: ledgerEntry.allocation.money + amount / 100 * ledgerEntry.allocation.percent }
+                data: { money: ledgerEntry.allocation.money + amount }
 
             }).then()
         }
@@ -55,7 +55,7 @@ export async function POST(request)
             prisma.allocation.update({
 
                 where: { id: allocationId },
-                data: { moneyToPut: ledgerEntry.allocation.moneyToPut + amount / 100 * ledgerEntry.allocation.percent }
+                data: { moneyToPut: ledgerEntry.allocation.moneyToPut + amount }
 
             }).then()
         }
@@ -64,11 +64,11 @@ export async function POST(request)
     else if(allocationsGroupId != null){
 
         const allocations = await prisma.allocation.findMany({ where: { allocationsGroupId } })
-        const commonPercent = allocations.reduce((total, allocation) => total + allocation.percent, 0);
+        const commonPercent = allocations.reduce((total, allocation) => total + allocation.percent, 0)
 
         Promise.all(allocations.map((allocation) => {
 
-            if(!allocation.remindToPutTo) {
+            if(!allocation.remindToPutTo || amount < 0) {
 
                 return prisma.allocation.update({
 

@@ -1,28 +1,34 @@
 import { NextResponse } from "next/server"
+import prisma from "@/libs/prisma"
 import { getUser, getLedgerEntry, getCategory, deleteLedgerEntry, getAllocations, editAllocation, getAllocation } from "../../../utils/database/database"
 
 export async function POST(request)
 {
     const { ledgerEntryId } = await request.json()
     const ledgerEntry = await getLedgerEntry(ledgerEntryId) 
-    const databaseRequests = [getUser(ledgerEntry.userId), getCategory(ledgerEntry.categoryId)]
-    const [user, category] = await Promise.all(databaseRequests)
 
-    if(category.type == "Income") {
+    if(ledgerEntry.allocationId == null && ledgerEntry.allocationsGroupId == null) prisma.allocation.findMany({ where: { userId: ledgerEntry.userId } })
+        .then((allocations) => Promise.all(allocations.map((allocation) => prisma.allocation.update({ 
+            
+            where: { id: allocation.id },
+            data: { money: allocation.money - ledgerEntry.amount / 100 * allocation.percent }
 
-        const allocations = await getAllocations(user.id)
+        }))).then())
 
-        for(const allocation of allocations) {
-
-            if(!allocation.remindToPutTo) editAllocation({ id: allocation.id, money: allocation.money - ledgerEntry.amount / 100 * allocation.percent })
-            else editAllocation({ id: allocation.id, moneyToPut: allocation.moneyToPut - ledgerEntry.amount / 100 * allocation.percent })
-        }
-    }
+    else if(ledgerEntry.allocationId != null) prisma.allocation.findFirst({ where: { id: ledgerEntry.allocationId }})
+        .then((allocation) => prisma.allocation.update({ where: { id: allocation.id }, data: { money: allocation.money - ledgerEntry.amount } }).then())
 
     else {
 
-        const allocation = await getAllocation(ledgerEntry.allocationId)
-        editAllocation({ id: allocation.id, money: allocation.money + ledgerEntry.amount })
+        const allocations = await prisma.allocation.findMany({ where: { allocationsGroupId: ledgerEntry.allocationsGroupId } })
+        const commonPercent = allocations.reduce((total, allocation) => total + allocation.percent, 0);
+
+        Promise.all(allocations.map((allocation) => prisma.allocation.update({
+
+                where: { id: allocation.id },
+                data: { money: allocation.money - ledgerEntry.amount * allocation.percent / commonPercent }
+
+        }))).then()
     }
 
     deleteLedgerEntry(ledgerEntryId)
