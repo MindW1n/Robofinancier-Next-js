@@ -3,13 +3,18 @@ import { fadeInOut } from "../animations/component"
 import { useState } from "react"
 import LedgerEntry from "../ledgerEntry/component"
 import LedgerForm from "../ledgerForm/component"
-const axios = require("@/libs/axios").default.axios
 
 export default function CreatedLedgerEntry({ session, index, onDelete })
 {
     const [ledgerEntry, setLedgerEntry] = useState()
 
-    const databaseFunction = async (data) => { return (await axios.post("/api/createLedgerEntry", data)).data.ledgerEntry }
+    const databaseFunction = async (data) => { return (await fetch("/api/createLedgerEntry", {
+        
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: data
+
+    })).data.ledgerEntry }
 
     return (
 

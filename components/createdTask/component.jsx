@@ -3,7 +3,6 @@ import { fadeInOut } from "../animations/component"
 import { useState } from "react"
 import TaskForm from "../taskForm/component"
 import Task from "../task/component"
-const axios = require("@/libs/axios").default.axios
 
 export default function CreatedTask({ index, onDelete, session })
 {
@@ -13,7 +12,12 @@ export default function CreatedTask({ index, onDelete, session })
 
     const databaseFunction = async (record) => {
         
-        return await axios.post("/api/createTask", { userId: session.user.id, record: record})
+        return await fetch("/api/createTask", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { userId: session.user.id, record: record }
+        })
     }
 
     const handleDeletion = () => onDelete(index)

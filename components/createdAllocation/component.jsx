@@ -4,7 +4,6 @@ import Allocation from "../allocation/component"
 import AllocationForm from "../allocationForm/component"
 import { motion } from "framer-motion"
 import { fadeInOut } from "../animations/component"
-const axios = require("@/libs/axios").default.axios
 
 export default function CreatedAllocation({ session, index, onCancel, onDelete, onSelect})
 {
@@ -12,16 +11,22 @@ export default function CreatedAllocation({ session, index, onCancel, onDelete, 
 
     const databaseFunction = useCallback(async (formData) => {
         
-        return (await axios.post("/api/createAllocation", { 
+        return (await fetch("/api/createAllocation", { 
                 
-            userId: session.user.id,
-            name: formData.name,
-            percent: Number(formData.percent),
-            money: Number(formData.money),
-            remindToPutTo: formData.remindToPutTo,
-            currency: formData.currency
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: {
+
+                userId: session.user.id,
+                name: formData.name,
+                percent: Number(formData.percent),
+                money: Number(formData.money),
+                remindToPutTo: formData.remindToPutTo,
+                currency: formData.currency
+            }
     
         })).data.allocation
+
     }, [])
     
     const onSubmit = useCallback((allocationData) => setAllocationData(allocationData), [])

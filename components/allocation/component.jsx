@@ -4,7 +4,6 @@ import AllocationForm from "../allocationForm/component"
 import { motion } from "framer-motion"
 import { fadeInOut } from "../animations/component"
 import PutOnAccountButton from "../putOnAccountButton/component"
-const axios = require("@/libs/axios").default.axios
 
 const Allocation = memo(({ data, index, onDelete, onSelect }) => {
 
@@ -16,16 +15,23 @@ const Allocation = memo(({ data, index, onDelete, onSelect }) => {
 
     const databaseFunction = useCallback(async (formData) => {
         
-        return (await axios.post("/api/editAllocation", { 
+        return (await fetch("/api/editAllocation", { 
                 
-            id: data.id,
-            name: formData.name,
-            percent: Number(formData.percent),
-            money: Number(formData.money),
-            remindToPutTo: formData.remindToPutTo,
-            currency: formData.currency
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+
+            body: {
+
+                id: data.id,
+                name: formData.name,
+                percent: Number(formData.percent),
+                money: Number(formData.money),
+                remindToPutTo: formData.remindToPutTo,
+                currency: formData.currency
+            }
     
         })).data.allocation
+
     }, [])
 
     const onSubmit = useCallback((allocationData) => {
@@ -36,7 +42,13 @@ const Allocation = memo(({ data, index, onDelete, onSelect }) => {
 
     const handleDelete = useCallback(() => {
 
-        axios.post("/api/deleteAllocation", { id: data.id })
+        fetch("/api/deleteAllocation", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { id: data.id }
+        })
+
         onDelete(index)
     }, [])
 
@@ -44,7 +56,14 @@ const Allocation = memo(({ data, index, onDelete, onSelect }) => {
 
         const newMoneyToPut = allocationData.moneyToPut - amount
         const newMoney = allocationData.money + amount
-        axios.post("/api/editAllocation", { id: allocationData.id, moneyToPut: newMoneyToPut, money: newMoney })
+
+        fetch("/api/editAllocation", { 
+
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { id: allocationData.id, moneyToPut: newMoneyToPut, money: newMoney }
+        })
+
         setAllocationData({ ...allocationData, moneyToPut: newMoneyToPut, money: newMoney })
     }
 

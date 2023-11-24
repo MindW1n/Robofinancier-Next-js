@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-import { getTasks } from "../../../utils/database/database"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { userId } = await request.json()
-    return NextResponse.json({ tasks: await getTasks(userId) })
+    return NextResponse.json({ tasks: await prisma.task.findMany({ where: { userId } }) })
 }

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-import { getAllocationsGroups } from "@/utils/database/database"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { userId } = await request.json()
-    return NextResponse.json({ allocationsGroups: await getAllocationsGroups(userId) })
+    return NextResponse.json({ allocationsGroups: await prisma.allocationsGroup.findMany({ where: { userId } }) })
 }

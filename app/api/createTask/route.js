@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-import { createTask } from "../../../utils/database/database"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { userId, record } = await request.json()
-    return NextResponse.json({ task: await createTask(userId, record) }, { status: 200 })
+    return NextResponse.json({ task: await prisma.task.create({ data: { userId, record } }).catch(() => null)})
 }

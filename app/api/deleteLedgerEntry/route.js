@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server"
 import prisma from "@/libs/prisma"
-import { getUser, getLedgerEntry, getCategory, deleteLedgerEntry, getAllocations, editAllocation, getAllocation } from "../../../utils/database/database"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { ledgerEntryId } = await request.json()
-    const ledgerEntry = await getLedgerEntry(ledgerEntryId) 
+    const ledgerEntry = await prisma.ledgerEntry.findFirst({ where: { id: ledgerEntryId } }) 
 
     if(ledgerEntry.allocationId == null && ledgerEntry.allocationsGroupId == null) prisma.allocation.findMany({ where: { userId: ledgerEntry.userId } })
         .then((allocations) => Promise.all(allocations.map((allocation) => prisma.allocation.update({ 
@@ -13,10 +12,15 @@ export async function POST(request)
             where: { id: allocation.id },
             data: { money: allocation.money - ledgerEntry.amount / 100 * allocation.percent }
 
-        }))).then())
+        }))).catch((error) => { throw error }))
 
     else if(ledgerEntry.allocationId != null) prisma.allocation.findFirst({ where: { id: ledgerEntry.allocationId }})
-        .then((allocation) => prisma.allocation.update({ where: { id: allocation.id }, data: { money: allocation.money - ledgerEntry.amount } }).then())
+        .then((allocation) => prisma.allocation.update({ 
+    
+            where: { id: allocation.id }, 
+            data: { money: allocation.money - ledgerEntry.amount } 
+        
+        }).catch((error) => { throw error }))
 
     else {
 
@@ -25,12 +29,12 @@ export async function POST(request)
 
         Promise.all(allocations.map((allocation) => prisma.allocation.update({
 
-                where: { id: allocation.id },
-                data: { money: allocation.money - ledgerEntry.amount * allocation.percent / commonPercent }
+            where: { id: allocation.id },
+            data: { money: allocation.money - ledgerEntry.amount * allocation.percent / commonPercent }
 
-        }))).then()
+        }))).catch((error) => { throw error })
     }
 
-    deleteLedgerEntry(ledgerEntryId)
+    prisma.ledgerEntry.delete({ where: { id: ledgerEntryId } }).catch((error) => { throw error })
     return NextResponse.json({ }, { status: 200 })
 }

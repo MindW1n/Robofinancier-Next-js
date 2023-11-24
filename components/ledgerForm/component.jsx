@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-const axios = require("@/libs/axios").default.axios
 
 export default function LedgerForm({ session, index, databaseFunction, placeholder, onCancel, onSubmit, onDelete })
 {
@@ -17,14 +16,30 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
 
     useEffect(() => {
 
-        axios.post("/api/getCategories", { userId: session.user.id })
-            .then((response) => setCategories(response.data.categories))
+        fetch("/api/getCategories", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { userId: session.user.id }
+        
+        }).then((response) => setCategories(response.data.categories))
 
-        axios.post("/api/getAllocations", { userId: session.user.id })
-            .then((response) => setAllocations(response.data.allocations))
+        fetch("/api/getAllocations", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { userId: session.user.id }
+        
+        }).then((response) => setAllocations(response.data.allocations))
 
-        axios.post("/api/getAllocationsGroups", { userId: session.user.id })
-            .then((response) => setAllocationsGroups(response.data.allocationsGroups))
+        fetch("/api/getAllocationsGroups", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { userId: session.user.id }
+        
+        }).then((response) => setAllocationsGroups(response.data.allocationsGroups))
+
     }, [])
 
     const handleSubmit = async () => {
@@ -39,7 +54,13 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
                 return
             }
 
-            categoryId = (await axios.post("/api/createCategory", { userId: session.user.id, name: categoryName })).data.category.id
+            categoryId = (await fetch("/api/createCategory", { 
+                
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: { userId: session.user.id, name: categoryName }
+            
+            })).data.category.id
         }
         
         if(!date || !amount) {

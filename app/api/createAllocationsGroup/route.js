@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server"
-import { createAllocationsGroup } from "../../../utils/database/database"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { userId, name, allocationsIds } = await request.json()
-    return NextResponse.json({ allocationsGroup: await createAllocationsGroup(userId, name, allocationsIds) })
+    const allocationsGroup = await prisma.allocationsGroup.create({ data: { name, userId } }).catch(() => null)
+
+    await allocationsIds.map((allocationId) => prisma.allocation.update({
+
+        where: { id: allocationId },
+        data: { allocationsGroupId: allocationsGroup.id}
+    }))
+
+    return NextResponse.json({ allocationsGroup })
 }

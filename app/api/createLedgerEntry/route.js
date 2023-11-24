@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { userId, date, allocationId, allocationsGroupId, categoryId, amount, record } = await request.json()
 
     const ledgerEntry = await prisma.ledgerEntry.create({ 
@@ -17,49 +17,34 @@ export async function POST(request)
 
         Promise.all(allocations.map((allocation) => {
 
-            if(!allocation.remindToPutTo || amount < 0) {
+            return prisma.allocation.update({
 
-                return prisma.allocation.update({
+                where: { id: allocation.id },
+                
+                data: (() => {
 
-                    where: { id: allocation.id },
-                    data: { money: allocation.money + amount / 100 * allocation.percent }
-                })
-            }
+                    return !allocation.remindToPutTo || amount < 0
+                        ? { money: allocation.money + amount / 100 * allocation.percent }
+                        : { moneyToPut: allocation.moneyToPut + amount / 100 * allocation.percent }
 
-            else {
+                })()
+            })
 
-                return prisma.allocation.update({
-
-                    where: { id: allocation.id },
-                    data: { moneyToPut: allocation.moneyToPut + amount / 100 * allocation.percent }
-                })
-            }
-
-        })).then()
+        })).catch((error) => { throw error })
     }
 
-    else if(allocationId != null) {
+    else if(allocationId != null) prisma.allocation.update({
 
-        if(!ledgerEntry.allocation.remindToPutTo || amount < 0) {
+        where: { id: allocationId },
 
-            prisma.allocation.update({
+        data: (() => {
 
-                where: { id: allocationId },
-                data: { money: ledgerEntry.allocation.money + amount }
+            return !ledgerEntry.allocation.remindToPutTo || amount < 0 
+                ? { money: ledgerEntry.allocation.money + amount }
+                : { moneyToPut: ledgerEntry.allocation.moneyToPut + amount }
+        })()
 
-            }).then()
-        }
-
-        else {
-
-            prisma.allocation.update({
-
-                where: { id: allocationId },
-                data: { moneyToPut: ledgerEntry.allocation.moneyToPut + amount }
-
-            }).then()
-        }
-    }
+    }).catch((error) => { throw error })
 
     else if(allocationsGroupId != null){
 
@@ -68,25 +53,20 @@ export async function POST(request)
 
         Promise.all(allocations.map((allocation) => {
 
-            if(!allocation.remindToPutTo || amount < 0) {
+            return prisma.allocation.update({
 
-                return prisma.allocation.update({
+                where: { id: allocation.id },
 
-                    where: { id: allocation.id },
-                    data: { money: allocation.money + amount * allocation.percent / commonPercent }
-                })
-            }
+                data: (() => {
 
-            else {
+                    return !allocation.remindToPutTo || amount < 0
+                        ? { money: allocation.money + amount * allocation.percent / commonPercent }
+                        : { moneyToPut: allocation.moneyToPut + amount * allocation.percent / commonPercent }
 
-                return prisma.allocation.update({
+                })()
+            })
 
-                    where: { id: allocation.id },
-                    data: { moneyToPut: allocation.moneyToPut + amount * allocation.percent / commonPercent}
-                })
-            }
-
-        })).then()
+        })).catch((error) => { throw error })
     }
 
     return NextResponse.json({ ledgerEntry })

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { fadeInOut } from "../animations/component"
 import { greenShades, redShades } from "../colorsSets/component"
 import { useEffect, useState } from "react"
+import Filter from "../filter/component"
 Chart.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, ArcElement)
 
 export default function StatisticsBoard({ session })
@@ -13,27 +14,46 @@ export default function StatisticsBoard({ session })
     const [incomesCategoriesMap, setIncomesCategoriesMap] = useState([])
     const [costsCategoriesMap, setCostsCategoriesMap] = useState([])
 
-    useEffect(() => {
+    const [scope, setScope] = useState({ 
+        
+        fromDate: (() => { 
+            
+            let date = new Date()
+            date.setDate(1)
+            return date
 
+        })(),
+
+        toDate: (() => { 
+            
+            let date = new Date()
+            date.setDate(31)
+            return date
+            
+        })(),
+    })
+
+    useEffect(() => {
+    
         (async () => {
 
-            const loadedLedgerEntries = (await (await fetch("http://localhost:3000/api/getLedgerEntries", {
+            const loadedLedgerEntries = (await fetch("http://localhost:3000/api/getLedgerEntries", {
 
                 method: "POST",
                 next: { tags: ["ledgerEntries"] },
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({  userId: session.user.id, orderBy: { date: "asc" } })
 
-            })).json()).ledgerEntries
+            }).then((response) => response.json())).ledgerEntries
 
-            const loadedCategories = (await (await fetch("http://localhost:3000/api/getCategories", {
+            const loadedCategories = (await fetch("http://localhost:3000/api/getCategories", {
 
                 method: "POST",
                 next: { tags: ["categories"] },
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({  userId: session.user.id })
 
-            })).json()).categories
+            }).then((response) => response.json())).categories
 
             let incomesCategoriesMap = {}
             let costsCategoriesMap = {}
@@ -45,68 +65,87 @@ export default function StatisticsBoard({ session })
 
             for(let i = 0; i < loadedLedgerEntries.length; i++) {
 
-                if(loadedLedgerEntries[i].amount > 0) {
-                    
-                    if(!incomesCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId)) 
-                        incomesCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
-
-                    incomesCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
-                }
-
-                else {
-                    
-                    if(!costsCategoriesMap.hasOwnProperty(loadedCategoriesMap[i].categoryId))
-                        costsCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
-
-                    costsCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
-                }
-
                 total += loadedLedgerEntries[i].amount
-                statistics.push({ date: loadedLedgerEntries[i].date, money: total })
+                let entryDate = new Date(loadedLedgerEntries[i].date)
+
+                if(entryDate >= scope.fromDate && entryDate <= scope.toDate) {
+
+                    if(loadedLedgerEntries[i].amount > 0) {
+
+                        if(!incomesCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId)) 
+                            incomesCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
+
+                        incomesCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
+                    }
+
+                    else {
+                        
+                        if(!costsCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId))
+                            costsCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
+
+                        costsCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
+                    }
+
+                    statistics.push({ date: loadedLedgerEntries[i].date, money: total })
+                }
+
             } 
 
             setStatistics(statistics)
             setIncomesCategoriesMap(incomesCategoriesMap)
             setCostsCategoriesMap(costsCategoriesMap)
+
         })()
-    }, [])
+
+    }, [scope])
+
+    const filterOnSubmit = (fromDate, toDate) => setScope({ fromDate, toDate })
 
     return (
     
         <AnimatePresence>
-            <div className="w-full h-full bg-gray-300 rounded-3xl mt-5 flex flex-col">
-                <motion.div key="amount-line-chart" { ...fadeInOut } className="h-2/5 m-4 rounded-3xl bg-slate-500">
-                    <Line data={{
+            <div className="w-full flex-1 bg-gray-300 rounded-3xl mt-5 flex flex-col overflow-y-auto">
+                <div className="h-full overflow-y-auto">
+                    <Filter onSubmit={ filterOnSubmit } defaultValue={ { fromDate: scope.fromDate?.toISOString().slice(0, 10), toDate: scope.toDate?.toISOString().slice(0, 10) } }/>
+                    <motion.div key="amount-line-chart" { ...fadeInOut } className="h-96 m-4 rounded-3xl bg-slate-500">
+                        <Line 
                             
-                        labels: statistics.map(value => value.date.slice(0, 10)),
-                        datasets: [
+                            data={{
+                                
+                                labels: statistics.map(value => value.date.slice(0, 10)),
 
-                            {
-                                label: "Account amount",
-                                data: statistics.map(value => value.money),
-                                backgroundColor: "rgb(34, 211, 238)",
-                                borderColor: "rgb(37, 99, 235)",
-                                borderWidth: 5
-                            }
-                        ]
-                        }} options={{ 
+                                datasets: [{
+
+                                    label: "Account amount",
+                                    data: statistics.map(value => value.money),
+                                    backgroundColor: "rgb(34, 211, 238)",
+                                    borderColor: "rgb(37, 99, 235)",
+                                    borderWidth: 5
+                                }]
+                            }} 
+                                
+                            options={{ 
 
                                 responsive: true,
                                 aspectRatio: 4.063829787,
+
                                 scales: {
 
                                     x: { 
                                         
                                         grid: { color: "rgb(160, 160, 160)" },
+
                                         ticks: { 
                                             
                                             color: "rgb(233, 233, 233)",
                                             font: { weight: "bold" }
                                         }
                                     },
+
                                     y: { 
                                         
                                         grid: { color: "rgb(160, 160, 160)" },
+
                                         ticks: { 
                                             
                                             color: "rgb(233, 233, 233)",
@@ -114,63 +153,64 @@ export default function StatisticsBoard({ session })
                                         }
                                     }
                                 },
+
                                 plugins: { legend: { labels: { 
                                     
                                     color: "rgb(233, 233, 233)",
                                     font: { weight: "bold" }
                                 }}}
-                        }} />
+                            }} 
+                        />
                     </motion.div>
-                <div className="h-3/5">
-                    <div className="flex flex-row h-full w-full">
-                        <AnimatePresence>
-                            <motion.div key="incomes-pie-chart" { ...fadeInOut } className="m-4 rounded-3xl bg-slate-500 w-1/2 flex justify-center">
-                                <Pie 
-                                    data={{ 
-                                        
-                                        labels: Object.entries(incomesCategoriesMap).map(category => category[1].name),
-                                        datasets: [
-
-                                            {
-                                                data: Object.entries(incomesCategoriesMap).map(category => category[1].total),
-                                                backgroundColor: greenShades
-                                            }
-                                        ]
-                                    }}
-                                    options={{
-
-                                        plugins: { legend: { labels: { 
+                    <div className="" style={{ height: "35rem"}}>
+                        <div className="flex flex-row h-full w-full">
+                            <AnimatePresence>
+                                <motion.div key="incomes-pie-chart" { ...fadeInOut } className="m-4 rounded-3xl bg-slate-500 w-1/2 flex justify-center">
+                                    <Pie 
+                                        data={{ 
                                             
-                                            color: "rgb(233, 233, 233)",
-                                            font: { weight: "bold" }
-                                        }}}
-                                    }}
-                                />
-                            </motion.div>
-                            <motion.div key="costs-pie-chart" { ...fadeInOut } className="m-4 rounded-3xl bg-slate-500 w-1/2 flex justify-center">
-                                <Pie 
-                                    data={{ 
-                                        
-                                        labels: Object.entries(costsCategoriesMap).map(category => category[1].name),
-                                        datasets: [
+                                            labels: Object.entries(incomesCategoriesMap).map(category => category[1].name),
 
-                                            {
-                                                data: Object.entries(costsCategoriesMap).map(category => category[1].total),
-                                                backgroundColor: redShades
-                                            }
-                                        ]
-                                    }}
-                                    options={{
+                                            datasets: [{
 
-                                        plugins: { legend: { labels: { 
+                                                    data: Object.entries(incomesCategoriesMap).map(category => category[1].total),
+                                                    backgroundColor: greenShades
+                                            }]
+                                        }}
+                                        options={{
+
+                                            plugins: { legend: { labels: { 
+                                                
+                                                color: "rgb(233, 233, 233)",
+                                                font: { weight: "bold" }
+                                            }}}
+                                        }}
+                                    />
+                                </motion.div>
+                                <motion.div key="costs-pie-chart" { ...fadeInOut } className="m-4 rounded-3xl bg-slate-500 w-1/2 flex justify-center">
+                                    <Pie 
+                                        data={{ 
                                             
-                                            color: "rgb(233, 233, 233)",
-                                            font: { weight: "bold" }
-                                        }}}
-                                    }}
-                                />
-                            </motion.div>
-                        </AnimatePresence>
+                                            labels: Object.entries(costsCategoriesMap).map(category => category[1].name),
+
+                                            datasets: [{
+
+                                                    data: Object.entries(costsCategoriesMap).map(category => category[1].total),
+                                                    backgroundColor: redShades
+                                            }]
+                                        }}
+                                        options={{
+
+                                            plugins: { legend: { labels: { 
+                                                
+                                                color: "rgb(233, 233, 233)",
+                                                font: { weight: "bold" }
+                                            }}}
+                                        }}
+                                    />
+                                </motion.div>
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </div>
             </div>

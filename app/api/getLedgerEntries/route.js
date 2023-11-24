@@ -1,8 +1,21 @@
 import { NextResponse } from "next/server"
-import { getLedgerEntries } from "../../../utils/database/database"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+    
     const { userId, orderBy } = await request.json()
-    return NextResponse.json({ ledgerEntries: await getLedgerEntries(userId, orderBy) })
+
+    return NextResponse.json({ ledgerEntries: await prisma.ledgerEntry.findMany({ 
+
+        where: { userId }, 
+        orderBy: orderBy, 
+        
+        include: {
+
+            allocation: true,
+            allocationsGroup: true,
+            category: true
+        } 
+
+    }) })
 }

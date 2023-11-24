@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { deleteAllocationsGroup } from "../../../utils/database/database"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { id } = await request.json()
-    deleteAllocationsGroup(id)
+    prisma.allocationsGroup.delete({ where: { id } }).catch((error) => { throw error })
     return NextResponse.json({}, { status: 200 })
 }

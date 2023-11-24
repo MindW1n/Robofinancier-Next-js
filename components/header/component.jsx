@@ -2,8 +2,8 @@ import UserIcon from "../userIcon/component"
 import Tab from "../tab/component"
 import { headers } from "next/headers"
 
-export default async function Header({ session })
-{
+export default async function Header({ session }) {
+
     const currentUrlPath = headers().get("x-invoke-path")
 
     return (

@@ -2,7 +2,6 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { fadeInOut } from "../animations/component"
-const axios = require("@/libs/axios").default.axios
 
 export default function UniteAllocationsButton({ selectedAllocationsData, session, onSubmit })
 {
@@ -24,23 +23,27 @@ export default function UniteAllocationsButton({ selectedAllocationsData, sessio
             }
         }
 
-        axios.post("/api/createAllocationsGroup", 
-            { userId: session.user.id, name: name, allocationsIds: selectedAllocationsData.map(allocation => allocation.id) })
-            .then((response) => {
+        fetch("/api/createAllocationsGroup", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { userId: session.user.id, name: name, allocationsIds: selectedAllocationsData.map(allocation => allocation.id) } 
+        
+        }).then((response) => {
 
-                const allocationsGroup = response.data.allocationsGroup
+            const allocationsGroup = response.data.allocationsGroup
 
-                if(!allocationsGroup) {
+            if(!allocationsGroup) {
 
-                    setErrorMessage("Group with this name already exists!")
-                    return
-                }
+                setErrorMessage("Group with this name already exists!")
+                return
+            }
 
-                setFormFlag(false)
-                setErrorMessage("")
-                setName("")
-                onSubmit(allocationsGroup)
-            })
+            setFormFlag(false)
+            setErrorMessage("")
+            setName("")
+            onSubmit(allocationsGroup)
+        })
     }
 
     return (

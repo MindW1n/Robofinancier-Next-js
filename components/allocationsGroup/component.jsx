@@ -4,7 +4,6 @@ import Allocation from "../allocation/component"
 import { motion } from "framer-motion"
 import { fadeInOut } from "../animations/component"
 import PutOnAccountButton from "../putOnAccountButton/component"
-const axios = require("@/libs/axios").default.axios
 
 export default function AllocationsGroup({ data, onDelete, index, ununiteAllocations })
 {
@@ -36,7 +35,14 @@ export default function AllocationsGroup({ data, onDelete, index, ununiteAllocat
                 const difference = amount * allocation.props.data.moneyToPut / moneyToPut
                 const newMoney = allocation.props.data.money + difference
                 const newMoneyToPut = allocation.props.data.moneyToPut - difference
-                axios.post("/api/editAllocation", { id: allocation.props.data.id, money: newMoney, moneyToPut: newMoneyToPut })
+
+                fetch("/api/editAllocation", { 
+                    
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: { id: allocation.props.data.id, money: newMoney, moneyToPut: newMoneyToPut }
+                })
+
                 return <Allocation { ...allocation.props } data={{ ...allocation.props.data, money: newMoney, moneyToPut: newMoneyToPut }} 
                     key={ allocation.props.id }/>
             })
@@ -50,19 +56,29 @@ export default function AllocationsGroup({ data, onDelete, index, ununiteAllocat
         if(allocations.length == 0) {
             
             onDelete(index)
-            axios.post("/api/deleteAllocationsGroup", { id: data.allocationsData[0].allocationsGroupId })
+            
+            fetch("/api/deleteAllocationsGroup", { 
+                
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: { id: data.allocationsData[0].allocationsGroupId }
+            })
         }
         
     }, [allocations])
 
-    const handleUnunite = () => axios.post("/api/ununiteAllocations", 
-        { allocationsGroupId: data.allocationsData[0].allocationsGroupId, allocationsIds: selectedAllocationsData.map(allocation => allocation.id) })
-        .then(() => {
+    const handleUnunite = () => fetch("/api/ununiteAllocations", { 
+        
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: { allocationsGroupId: data.allocationsData[0].allocationsGroupId, allocationsIds: selectedAllocationsData.map(allocation => allocation.id) }
 
-            selectedAllocationsData.map(allocation => removeAllocation(allocation.id))
-            ununiteAllocations(selectedAllocationsData.map(data => ({ ...data, allocationsGroupId: null })))
-            setSelectedAllocationsData([])
-        })
+    }).then(() => {
+
+        selectedAllocationsData.map(allocation => removeAllocation(allocation.id))
+        ununiteAllocations(selectedAllocationsData.map(data => ({ ...data, allocationsGroupId: null })))
+        setSelectedAllocationsData([])
+    })
 
     return (
 

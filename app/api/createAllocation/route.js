@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server"
-import { createAllocation, getMaxAllocationPercent } from "../../../utils/database/database"
+import { getMaxAllocationPercent } from "@/utils/calculations"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { userId, name, percent, money, currency, remindToPutTo } = await request.json()
-    const maxAllocationPercent = await getMaxAllocationPercent(userId)
+    const allocations = await prisma.allocation.findMany({ where: { userId } })
+    const maxAllocationPercent = getMaxAllocationPercent(allocations)
     if(percent > maxAllocationPercent) return NextResponse.json({ allocation: null })
-    else return NextResponse.json({ allocation: await createAllocation(userId, name, percent, money, currency, remindToPutTo) })
+    else return NextResponse.json({ allocation: await prisma.allocation.create({ data: { userId, name, percent, money, currency, 
+        remindToPutTo } }).catch(() => null) })
 }

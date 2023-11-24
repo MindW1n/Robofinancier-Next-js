@@ -2,21 +2,29 @@ import { motion } from "framer-motion"
 import { fadeInOut } from "../animations/component"
 import { useState } from "react"
 import LedgerForm from "../ledgerForm/component"
-const axios = require("@/libs/axios").default.axios
 
 export default function LedgerEntry({ data, onDelete, session, index })
 {
     const [ledgerEntryData, setLedgerEntryData] = useState(data)
     const [editFormFlag, setEditFormFlag] = useState(false)
 
-    const databaseFunction = async (formData) => {
+    const databaseFunction = async (formData) => { return (await fetch("/api/editLedgerEntry", { 
         
-        return (await axios.post("/api/editLedgerEntry", { id: data.id, ...formData })).data.ledgerEntry
-    }
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: { id: data.id, ...formData }
+    
+    })).data.ledgerEntry }
 
     const handleDelete = () => {
 
-        axios.post("/api/deleteLedgerEntry", { ledgerEntryId: data.id })
+        fetch("/api/deleteLedgerEntry", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { ledgerEntryId: data.id }
+        })
+
         onDelete(index)
     }
 

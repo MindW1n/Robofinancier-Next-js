@@ -2,7 +2,6 @@ import { motion } from "framer-motion"
 import { fadeInOut } from "../animations/component"
 import { useState } from "react"
 import TaskForm from "../taskForm/component"
-const axios = require("@/libs/axios").default.axios
 
 export default function Task({ data, onDelete, index }) 
 {
@@ -11,13 +10,24 @@ export default function Task({ data, onDelete, index })
 
     const handleDeletion = async () => {
 
-        await axios.post("/api/deleteTask", { id: data.id })
+        await fetch("/api/deleteTask", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { id: data.id } }
+        )
+
         onDelete(index)
     }
 
     const databaseFunction = async (record) => { 
         
-        return await axios.post("/api/editTask", { id: data.id, record: record })
+        return await fetch("/api/editTask", { 
+            
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { id: data.id, record: record } }
+        )
     }
 
     return (

@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server"
-import { updateAllocationsGroupIds } from "@/utils/database/database"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { allocationsIds } = await request.json()
-    updateAllocationsGroupIds(allocationsIds, null)
+
+    Promise.all(allocationsIds.map((allocationId) => prisma.allocation.update({
+
+        where: { id: allocationId },
+        data: { allocationsGroupId: null }
+
+    }))).catch((error) => { throw error })
+
     return NextResponse.json({ }, { status: 200 })
 }

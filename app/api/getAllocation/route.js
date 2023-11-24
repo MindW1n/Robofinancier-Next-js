@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-import { getAllocation } from "../../../utils/database/database"
+import prisma from "@/libs/prisma"
 
-export async function POST(request)
-{
+export async function POST(request) {
+
     const { allocationId } = await request.json()
-    return NextResponse.json({ allocation: await getAllocation(allocationId) })
+    return NextResponse.json({ allocation: await prisma.allocation.findFirst({ where: { id: allocationId } }) })
 }
