@@ -8,7 +8,6 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
     const [date, setDate] = useState(placeholder ? placeholder.date.slice(0, 10) : "")
     const [amount, setAmount] = useState(placeholder ? placeholder.amount : "0")
     const [categoryName, setCategoryName] = useState("")
-    const [categoryType, setCategoryType] = useState("Income")
     const [record, setRecord] = useState(placeholder ? placeholder.record : "")
     const [selectedCategory, setSelectedCategory] = useState(placeholder ? String(placeholder.categoryId) : "new")
     const [selectedAllocation, setSelectedAllocation] = useState(placeholder?.allocationId ? "allocation " + placeholder.allocationId : "all")
@@ -20,25 +19,25 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { userId: session.user.id }
+            body: JSON.stringify({ userId: session.user.id })
         
-        }).then((response) => setCategories(response.data.categories))
+        }).then((response) => response.json()).then((data) => setCategories(data.categories))
 
         fetch("/api/getAllocations", { 
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { userId: session.user.id }
+            body: JSON.stringify({ userId: session.user.id })
         
-        }).then((response) => setAllocations(response.data.allocations))
+        }).then((response) => response.json()).then((data) => setAllocations(data.allocations))
 
         fetch("/api/getAllocationsGroups", { 
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { userId: session.user.id }
+            body: JSON.stringify({ userId: session.user.id })
         
-        }).then((response) => setAllocationsGroups(response.data.allocationsGroups))
+        }).then((response) => response.json()).then((data) => setAllocationsGroups(data.allocationsGroups))
 
     }, [])
 
@@ -48,7 +47,7 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
         
         if(selectedCategory == "new") {
 
-            if(!categoryName || !categoryType) {
+            if(!categoryName) {
 
                 setIncorrectInputValue("All inputs must be completed!")
                 return
@@ -58,9 +57,10 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
                 
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: { userId: session.user.id, name: categoryName }
+                body: JSON.stringify({ userId: session.user.id, name: categoryName })
             
-            })).data.category.id
+            }).then((response) => response.json())).category.id
+
         }
         
         if(!date || !amount) {
@@ -114,21 +114,21 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
                 <input type="date" className="createAllocationInput bg-blue-700 w-1/2" onChange={ (event) => setDate(event.target.value) }
                     defaultValue={ date }/>
                 <select className="transition-all duration-300 w-1/2 createAllocationInput bg-slate-400" 
-                    onChange={ (event) => setSelectedAllocation(event.target.value) } value={ selectedAllocation } >
+                    onChange={ (event) => setSelectedAllocation(event.target.value) } value={ selectedAllocation }>
 
                     {   allocations.length ? [
                       
-                            <option value="all">All</option>,
-                            <optgroup label="Allocations">
-                            {   allocations.map((allocation, index) => <option value={ "allocation " + String(allocation.id) } key={ "allocation" + index }>{ allocation.name }</option>) }
+                            <option value="all" key="allocation all">All</option>,
+                            <optgroup label="Allocations" key="allocations optgroup">
+                                { allocations.map((allocation, index) => <option value={ "allocation " + String(allocation.id) } key={ "allocation " + index }>{ allocation.name }</option>) }
                             </optgroup>,
-                            allocationsGroups.length ? 
-                                <optgroup label="Allocations groups">
+                            allocationsGroups.length 
+                              ? <optgroup label="Allocations groups" key="groups optgroup">
                                     { allocationsGroups.map((allocationsGroup, index) => <option value={ "group " + String(allocationsGroup.id) } key={ "group" + index }>{ allocationsGroup.name }</option>)}
                                 </optgroup> : ""
-                        ]
 
-                        : <option value={ "none" }>No allocations</option> } 
+                        ] : <option value={ "none" } key="no allocations">No allocations</option> 
+                    } 
 
                 </select>
             </div>
@@ -137,7 +137,7 @@ export default function LedgerForm({ session, index, databaseFunction, placehold
                     onChange={ (event) => setAmount(event.target.value) } defaultValue={ amount }/>
                 <select className="w-1/2 bg-slate-400 createAllocationInput" onChange={ (event) => setSelectedCategory(event.target.value) }
                     value={ selectedCategory }>
-                    { categories.map((category) => <option value={ category.id }>{ category.name }</option>)}
+                    { categories.map((category, index) => <option value={ category.id } key={ "category" + index}>{ category.name }</option>)}
                     <option value="new">New category</option>
                 </select>
             </div>

@@ -20,7 +20,7 @@ const Allocation = memo(({ data, index, onDelete, onSelect }) => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
 
-            body: {
+            body: JSON.stringify({
 
                 id: data.id,
                 name: formData.name,
@@ -28,9 +28,9 @@ const Allocation = memo(({ data, index, onDelete, onSelect }) => {
                 money: Number(formData.money),
                 remindToPutTo: formData.remindToPutTo,
                 currency: formData.currency
-            }
+            })
     
-        })).data.allocation
+        }).then((response) => response.json())).allocation
 
     }, [])
 
@@ -46,8 +46,9 @@ const Allocation = memo(({ data, index, onDelete, onSelect }) => {
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { id: data.id }
-        })
+            body: JSON.stringify({ id: data.id })
+
+        }).catch((error) => { throw error })
 
         onDelete(index)
     }, [])
@@ -61,8 +62,9 @@ const Allocation = memo(({ data, index, onDelete, onSelect }) => {
 
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { id: allocationData.id, moneyToPut: newMoneyToPut, money: newMoney }
-        })
+            body: JSON.stringify({ id: allocationData.id, moneyToPut: newMoneyToPut, money: newMoney })
+
+        }).catch((error) => { throw error })
 
         setAllocationData({ ...allocationData, moneyToPut: newMoneyToPut, money: newMoney })
     }

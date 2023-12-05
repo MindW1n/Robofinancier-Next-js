@@ -22,7 +22,7 @@ export default function Sidebar({ session })
 
             const databaseRequests = [
                 
-                fetch("http://localhost:3000/api/getAllocations", {
+                fetch("/api/getAllocations", {
 
                     method: "POST",
                     next: { tags: ["allocations"] },
@@ -31,7 +31,7 @@ export default function Sidebar({ session })
 
                 }).then(response => response.json()), 
                 
-                fetch("http://localhost:3000/api/getAllocationsGroups", {
+                fetch("/api/getAllocationsGroups", {
 
                     method: "POST",
                     next: { tags: ["allocationsGroups"] },

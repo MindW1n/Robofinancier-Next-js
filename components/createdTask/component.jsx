@@ -12,12 +12,13 @@ export default function CreatedTask({ index, onDelete, session })
 
     const databaseFunction = async (record) => {
         
-        return await fetch("/api/createTask", { 
+        return (await fetch("/api/createTask", { 
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { userId: session.user.id, record: record }
-        })
+            body: JSON.stringify({ userId: session.user.id, record: record })
+
+        }).then((response) => response.json())).task
     }
 
     const handleDeletion = () => onDelete(index)

@@ -27,7 +27,12 @@ export default function UniteAllocationsButton({ selectedAllocationsData, sessio
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { userId: session.user.id, name: name, allocationsIds: selectedAllocationsData.map(allocation => allocation.id) } 
+            body: JSON.stringify({ 
+                
+                userId: session.user.id, 
+                name, 
+                allocationsIds: selectedAllocationsData.map(allocation => allocation.id) 
+            })
         
         }).then((response) => {
 

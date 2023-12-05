@@ -8,13 +8,13 @@ export default function LedgerEntry({ data, onDelete, session, index })
     const [ledgerEntryData, setLedgerEntryData] = useState(data)
     const [editFormFlag, setEditFormFlag] = useState(false)
 
-    const databaseFunction = async (formData) => { return (await fetch("/api/editLedgerEntry", { 
+    const databaseFunction = async (formData) => (await fetch("/api/editLedgerEntry", { 
         
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: { id: data.id, ...formData }
+        body: JSON.stringify({ id: data.id, ...formData })
     
-    })).data.ledgerEntry }
+    }).then((response) => response.json())).ledgerEntry
 
     const handleDelete = () => {
 
@@ -22,8 +22,9 @@ export default function LedgerEntry({ data, onDelete, session, index })
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { ledgerEntryId: data.id }
-        })
+            body: JSON.stringify({ ledgerEntryId: data.id })
+
+        }).catch((error) => { throw error })
 
         onDelete(index)
     }

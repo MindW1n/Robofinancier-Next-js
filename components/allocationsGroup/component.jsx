@@ -40,8 +40,9 @@ export default function AllocationsGroup({ data, onDelete, index, ununiteAllocat
                     
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: { id: allocation.props.data.id, money: newMoney, moneyToPut: newMoneyToPut }
-                })
+                    body: JSON.stringify({ id: allocation.props.data.id, money: newMoney, moneyToPut: newMoneyToPut })
+
+                }).catch((error) => { throw error })
 
                 return <Allocation { ...allocation.props } data={{ ...allocation.props.data, money: newMoney, moneyToPut: newMoneyToPut }} 
                     key={ allocation.props.id }/>
@@ -61,8 +62,9 @@ export default function AllocationsGroup({ data, onDelete, index, ununiteAllocat
                 
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: { id: data.allocationsData[0].allocationsGroupId }
-            })
+                body: JSON.stringify({ id: data.allocationsData[0].allocationsGroupId })
+
+            }).catch((error) => { throw error })
         }
         
     }, [allocations])
@@ -71,7 +73,7 @@ export default function AllocationsGroup({ data, onDelete, index, ununiteAllocat
         
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: { allocationsGroupId: data.allocationsData[0].allocationsGroupId, allocationsIds: selectedAllocationsData.map(allocation => allocation.id) }
+        body: JSON.stringify({ allocationsGroupId: data.allocationsData[0].allocationsGroupId, allocationsIds: selectedAllocationsData.map(allocation => allocation.id) })
 
     }).then(() => {
 

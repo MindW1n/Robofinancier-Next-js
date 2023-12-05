@@ -10,7 +10,7 @@ export default function Task({ data, onDelete, index })
 
     const handleDeletion = async () => {
 
-        await fetch("/api/deleteTask", { 
+        await ("/api/deleteTask", { 
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -22,12 +22,13 @@ export default function Task({ data, onDelete, index })
 
     const databaseFunction = async (record) => { 
         
-        return await fetch("/api/editTask", { 
+        return (await fetch("/api/editTask", { 
             
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: { id: data.id, record: record } }
-        )
+            body: JSON.stringify({ id: data.id, record: record } )
+
+        }).then((response) => response.json())).task
     }
 
     return (

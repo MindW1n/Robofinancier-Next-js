@@ -16,14 +16,14 @@ export default function TasksBoard({ session })
 
         (async () => {
 
-            const loadedTasks = (await (await fetch("http://localhost:3000/api/getTasks", {
+            const loadedTasks = (await fetch("/api/getTasks", {
 
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 next: { tags: ["tasks"] },
-                body: JSON.stringify({  userId: session.user.id })
+                body: JSON.stringify({ userId: session.user.id })
 
-            })).json()).tasks
+            }).then(response=> response.json())).tasks
 
             setLoadedTasks(loadedTasks.map(data => <Task data={ data } key={ data.id } onDelete={ handleLoadedTaskDeletion } index={ data.id }/>))
         })()

@@ -8,6 +8,8 @@ import { useEffect, useState } from "react"
 import Filter from "../filter/component"
 Chart.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, ArcElement)
 
+let [loadedLedgerEntries, loadedCategories] = [[], []]
+
 export default function StatisticsBoard({ session })
 {
     const [statistics, setStatistics] = useState([])
@@ -33,11 +35,52 @@ export default function StatisticsBoard({ session })
         })(),
     })
 
+    const getStatistics = () => {
+
+        let [incomesCategoriesMap, costsCategoriesMap, loadedCategoriesMap] = [{}, {} ,{}]
+        loadedCategories.map((category) => { loadedCategoriesMap[category.id] = { name: category.name } })
+
+        let total = 0
+        let statistics = []
+
+        for(let i = 0; i < loadedLedgerEntries.length; i++) {
+
+            total += loadedLedgerEntries[i].amount
+            let entryDate = new Date(loadedLedgerEntries[i].date)
+
+            if(entryDate >= scope.fromDate && entryDate <= scope.toDate) {
+
+                if(loadedLedgerEntries[i].amount > 0) {
+
+                    if(!incomesCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId)) 
+                        incomesCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
+
+                    incomesCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
+                }
+
+                else {
+                    
+                    if(!costsCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId))
+                        costsCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
+
+                    costsCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
+                }
+
+                statistics.push({ date: loadedLedgerEntries[i].date, money: total })
+            }
+
+        } 
+
+        setStatistics(statistics)
+        setIncomesCategoriesMap(incomesCategoriesMap)
+        setCostsCategoriesMap(costsCategoriesMap)
+    }
+
     useEffect(() => {
     
         (async () => {
 
-            const loadedLedgerEntries = (await fetch("http://localhost:3000/api/getLedgerEntries", {
+            loadedLedgerEntries = (await fetch("/api/getLedgerEntries", {
 
                 method: "POST",
                 next: { tags: ["ledgerEntries"] },
@@ -46,7 +89,7 @@ export default function StatisticsBoard({ session })
 
             }).then((response) => response.json())).ledgerEntries
 
-            const loadedCategories = (await fetch("http://localhost:3000/api/getCategories", {
+            loadedCategories = (await fetch("/api/getCategories", {
 
                 method: "POST",
                 next: { tags: ["categories"] },
@@ -55,49 +98,13 @@ export default function StatisticsBoard({ session })
 
             }).then((response) => response.json())).categories
 
-            let incomesCategoriesMap = {}
-            let costsCategoriesMap = {}
-            let loadedCategoriesMap = {}
-            loadedCategories.map((category) => { loadedCategoriesMap[category.id] = { name: category.name } })
-
-            let total = 0
-            let statistics = []
-
-            for(let i = 0; i < loadedLedgerEntries.length; i++) {
-
-                total += loadedLedgerEntries[i].amount
-                let entryDate = new Date(loadedLedgerEntries[i].date)
-
-                if(entryDate >= scope.fromDate && entryDate <= scope.toDate) {
-
-                    if(loadedLedgerEntries[i].amount > 0) {
-
-                        if(!incomesCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId)) 
-                            incomesCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
-
-                        incomesCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
-                    }
-
-                    else {
-                        
-                        if(!costsCategoriesMap.hasOwnProperty(loadedLedgerEntries[i].categoryId))
-                            costsCategoriesMap[loadedLedgerEntries[i].categoryId] = { name: loadedCategoriesMap[loadedLedgerEntries[i].categoryId].name, total: 0 }
-
-                        costsCategoriesMap[loadedLedgerEntries[i].categoryId].total += loadedLedgerEntries[i].amount
-                    }
-
-                    statistics.push({ date: loadedLedgerEntries[i].date, money: total })
-                }
-
-            } 
-
-            setStatistics(statistics)
-            setIncomesCategoriesMap(incomesCategoriesMap)
-            setCostsCategoriesMap(costsCategoriesMap)
+            getStatistics()
 
         })()
 
-    }, [scope])
+    }, [])
+
+    useEffect(() => getStatistics(), [scope])
 
     const filterOnSubmit = (fromDate, toDate) => setScope({ fromDate, toDate })
 

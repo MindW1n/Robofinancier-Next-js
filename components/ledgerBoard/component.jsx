@@ -14,14 +14,14 @@ export default function LedgerBoard({ session })
 
         (async () => {
 
-            const loadedLedgerEntries = (await (await fetch("http://localhost:3000/api/getLedgerEntries", {
+            const loadedLedgerEntries = (await fetch("/api/getLedgerEntries", {
 
                 method: "POST",
                 next: { tags: ["ledgerEntries"] },
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({  userId: session.user.id, orderBy: { date: "desc" } })
 
-            })).json()).ledgerEntries
+            }).then((response) => response.json())).ledgerEntries
 
             setLoadedLedgerEntries(loadedLedgerEntries.map(ledgerEntryData => 
                 <LedgerEntry data={ ledgerEntryData } key={ ledgerEntryData.id } index={ ledgerEntryData.id } session={ session } 

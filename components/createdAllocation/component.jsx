@@ -15,7 +15,8 @@ export default function CreatedAllocation({ session, index, onCancel, onDelete, 
                 
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: {
+
+            body: JSON.stringify({
 
                 userId: session.user.id,
                 name: formData.name,
@@ -23,9 +24,9 @@ export default function CreatedAllocation({ session, index, onCancel, onDelete, 
                 money: Number(formData.money),
                 remindToPutTo: formData.remindToPutTo,
                 currency: formData.currency
-            }
+            })
     
-        })).data.allocation
+        }).then((response) => response.json())).allocation
 
     }, [])
     
